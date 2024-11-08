@@ -1,0 +1,33 @@
+name: Fig2 Mem
+method: grid
+parameters:
+  alg:
+    values:
+      - seq
+      - quasi
+      - deer
+  batch_size:
+    value: 16
+  nh:
+    values:
+      - 8
+      - 16
+      - 32
+      - 64
+  nreps:
+    value: 1
+  nsequence:
+    values:
+      - 30000
+      - 100000
+      - 300000
+      - 1000000
+  nwarmups:
+    value: 0
+  seed:
+    values:
+      - 1
+      - 2
+      - 3
+  with_jit:
+    value: true
