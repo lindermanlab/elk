@@ -2,7 +2,7 @@
 
 This repository contains code for the paper "Towards Scalable and Stable Parallelization of Nonlinear RNNs," published in NeurIPS 2024. The paper is available on ArXiv [here](https://arxiv.org/abs/2407.19115). The primary contributions of our paper are the quasi-DEER and ELK algorithms. quasi-DEER is a scalable algorithm. ELK, which stands for "**E**valuating **L**evenberg-Marquardt with **K**alman, is a stable algorithm. We also contribute quasi-ELK, which is both scalable and stable.
 
-![Figure 1](./ims/banner_schematic.png)
+![Figure 1](./ims/banner_with_citation.png)
 
 Our paper and codebase build on the work of YH Lim, *et al.*, in "Parallelizing non-linear sequential models over the sequence length", ([paper](https://arxiv.org/abs/2309.12252), [codebase](https://github.com/machine-discovery/deer)) published in ICLR 2024. This work from Machine Discovery Ltd is licensed under the [BSD 3-Clause License](https://github.com/machine-discovery/deer/blob/main/LICENSE). The particular files in our codebase from DEER are `deer.py` and the folder `fig3`; and much of the set-up in `qdeer_profile_exps_figs_2_5_6` comes from the analogous [experiments](https://github.com/machine-discovery/deer/tree/main/experiments/01_speed_benchmark) in DEER, though we contribute the memory profiling code.
 
