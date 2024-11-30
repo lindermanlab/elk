@@ -27,7 +27,7 @@ We originally wrote the paper in Python 3.9, but this required running in a sing
 
 Google Colab runs with Python 3.10
 
-To install into a Google colab, `git clone` this repo, and then `cd` into `elk`. First, `import jax`, and then run `pip install --upgrade --no-deps -e .[flex]`
+To install into a Google colab, `git clone` this repo, and then `cd` into `elk`. First, `import jax`, and then run `pip install --upgrade -e .[flex]`
 
 ## Versions
 
