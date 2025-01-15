@@ -10,7 +10,6 @@ Modifications to use quasi-DEER by Xavier Gonzalez (2024).
 
 Run on a 1GB V100
 """
-
 import wandb
 import time
 
@@ -31,6 +30,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import pytorch_lightning as pl
 from tqdm import tqdm
 from jax._src import prng
+
 
 from elk.algs.deer import seq1d
 
@@ -234,6 +234,7 @@ class SingleScaleGRU(eqx.Module):
         def model_func(carry: jnp.ndarray, inputs: jnp.ndarray, model: Any):
             return model(inputs, carry)[1]  # could be [0] or [1]
 
+        all_samp_iters = []
         for i in range(self.nlayer):
             inputs = jax.vmap(self.norms[i])(inputs)  # XG change
 
@@ -263,15 +264,21 @@ class SingleScaleGRU(eqx.Module):
                         yinit_guess,
                         quasi=self.quasi,  # XG addition
                     )
+                all_samp_iters.append(samp_iters)
                 x_from_all_channels.append(x)
 
+            samp_iters_out = jnp.stack(all_samp_iters)
             x = jnp.concatenate(x_from_all_channels, axis=-1)
             x = jax.vmap(self.norms[i + 1])(  # XG change
                 x + inputs
             )  # add and norm after multichannel GRU layer
             x = self.mlps[i](x) + x  # add with norm added in the next loop
             inputs = x
-        return self.classifier(x), samp_iters
+        return (
+            self.classifier(x),
+            samp_iters_out,
+            samp_iters,
+        )  # samp_iters_out is averaged over all layers, samp_iters is last layer only
 
 
 # --------------------------------
@@ -435,11 +442,11 @@ def rollout(
 
     return: (nclass,)
     """
-    out, samp_iters = model(inputs, y0, yinit_guess)
-    jax.debug.print(
-        "inside of rollout, samp_iters is {samp_iters}", samp_iters=samp_iters
-    )
-    return out.mean(axis=0), samp_iters
+    out, samp_iters_all, samp_iters_last = model(inputs, y0, yinit_guess)
+    # jax.debug.print(
+    #     "inside of rollout, samp_iters is {samp_iters}", samp_iters=samp_iters
+    # )
+    return out.mean(axis=0), samp_iters_all, samp_iters_last
 
 
 @partial(jax.jit, static_argnames=("static"))
@@ -459,16 +466,16 @@ def loss_fn(
     x, y = batch
 
     # ypred: (nbatch, nclass)
-    ypred, samp_iters = jax.vmap(rollout, in_axes=(None, 0, 0, 0), out_axes=(0))(
-        model, y0, x, yinit_guess
-    )
-    jax.debug.print(
-        "inside of loss_fn, samp_iters is {samp_iters}", samp_iters=samp_iters
-    )
+    ypred, samp_iters_all, samp_iters_last = jax.vmap(
+        rollout, in_axes=(None, 0, 0, 0), out_axes=(0)
+    )(model, y0, x, yinit_guess)
+    # jax.debug.print(
+    #     "inside of loss_fn, samp_iters is {samp_iters}", samp_iters=samp_iters
+    # )
 
     metrics = compute_metrics(ypred, y)
     loss, accuracy = metrics["loss"], metrics["accuracy"]
-    return loss, (accuracy, samp_iters)
+    return loss, (accuracy, samp_iters_all, samp_iters_last)
 
 
 @partial(jax.jit, static_argnames=("static", "optimizer"))
@@ -489,23 +496,31 @@ def update_step(
     loss_and_aux, grad = jax.value_and_grad(loss_fn, argnums=0, has_aux=True)(
         params, static, y0, batch, yinit_guess
     )
-    loss, (accuracy, samp_iters) = loss_and_aux
+    loss, (accuracy, samp_iters_all, samp_iters_last) = loss_and_aux
     updates, opt_state = optimizer.update(grad, opt_state, params)
     new_params = optax.apply_updates(params, updates)
     gradnorm = grad_norm(grad)
-    jax.debug.print(
-        "inside of update_step, samp_iters is {samp_iters}", samp_iters=samp_iters
+    # jax.debug.print(
+    #     "inside of update_step, samp_iters is {samp_iters}", samp_iters=samp_iters
+    # )
+    return (
+        new_params,
+        opt_state,
+        loss,
+        accuracy,
+        gradnorm,
+        samp_iters_all,
+        samp_iters_last,
     )
-    return new_params, opt_state, loss, accuracy, gradnorm, samp_iters
 
 
 def train():
-    wandb.init(project="elk")
+    wandb.init(project="elk", entity="xavier_gonzalez")
     # set up argparse for the hyperparameters above
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--lr", type=float, default=3e-5)
-    parser.add_argument("--nepochs", type=int, default=3000)
+    parser.add_argument("--nepochs", type=int, default=9)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--version", type=int, default=0)
     parser.add_argument("--ninps", type=int, default=6)
@@ -534,7 +549,8 @@ def train():
     args = parser.parse_args()
 
     # set seed for pytorch
-    torch.manual_seed(42)
+    # torch.manual_seed(42)
+    pl.seed_everything(args.seed)
 
     ninp = args.ninps
     nstate = args.nstates
@@ -617,7 +633,15 @@ def train():
                 pass
             batch = prep_batch(batch, dtype)
             t0 = time.time()
-            params, opt_state, loss, accuracy, gradnorm, samp_iters = update_step(
+            (
+                params,
+                opt_state,
+                loss,
+                accuracy,
+                gradnorm,
+                samp_iters_all,
+                samp_iters_last,
+            ) = update_step(
                 params=params,
                 static=static,
                 optimizer=optimizer,
@@ -633,7 +657,8 @@ def train():
                     "train_accuracy": accuracy,
                     "gru_gradnorm": gradnorm,
                     "time_per_train_step": t1 - t0,
-                    "samp_iters_train": jnp.mean(samp_iters),
+                    "samp_iters_train": jnp.mean(samp_iters_all),
+                    "samp_iters_train_last": jnp.mean(samp_iters_last),
                 },
                 step=step,
             )
@@ -662,7 +687,7 @@ def train():
                     pass
                 batch = prep_batch(batch, dtype)
                 tstart = time.time()
-                loss, (accuracy, samp_iters) = loss_fn(
+                loss, (accuracy, samp_iters, _) = loss_fn(
                     inference_params, inference_static, y0, batch, yinit_guess
                 )
                 tval += time.time() - tstart
@@ -678,7 +703,7 @@ def train():
                     "val_loss": val_loss,
                     "val_accuracy": val_acc,
                     "time_per_val_step": tval,
-                    "samp_iters_val": tval,
+                    "samp_iters_val": jnp.mean(samp_iters),  # averaged over all layers
                 },
                 step=step,
             )
