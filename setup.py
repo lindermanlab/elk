@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 # Define the base requirements with specific versions
 base_requirements = [
     "diffrax==0.6.0",
-    "dynamax==0.1.4",
+    "dynamax==0.1.5",
     "equinox==0.11.8",
     "flax==0.10.0",
     "GPUtil==1.4.0",
