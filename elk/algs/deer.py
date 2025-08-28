@@ -28,7 +28,7 @@ def seq1d(
     max_iter: int = 10000,
     memory_efficient: bool = False,
     quasi: bool = False,
-    qmem_efficient: bool = True,  # XG addition
+    qmem_efficient: bool = False,  # XG addition
     full_trace: bool = False,  # XG addition
 ):
     """
