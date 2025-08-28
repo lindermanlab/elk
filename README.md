@@ -34,6 +34,9 @@ To install into a Google colab, `git clone` this repo, and then `cd` into `elk`.
 This is a living repo which will change as we develop more applications. See [the tag v1.0.0](https://github.com/lindermanlab/elk/releases/tag/v1.0.0) for the version corresponding to our [NeurIPS paper](https://arxiv.org/abs/2407.19115)
 
 ## Citation
+
+Please also star this repo if you find the code interesting or useful!
+
 ```
 @inproceedings{gonzalez2024scalable,
   title={Towards Scalable and Stable Parallelization of Nonlinear RNNs},
