@@ -2,6 +2,8 @@
 
 **Check out our [demo colab](https://colab.research.google.com/github/lindermanlab/elk/blob/main/blog.ipynb)**
 
+**Check out out [talk](https://www.youtube.com/watch?v=C9AqgW51-B4) at the [ASAP online seminar](https://asap-seminar.github.io/)!**
+
 This repository contains code for the paper "Towards Scalable and Stable Parallelization of Nonlinear RNNs," published in NeurIPS 2024. The paper is available on ArXiv [here](https://arxiv.org/abs/2407.19115). The primary contributions of our paper are the quasi-DEER and ELK algorithms. quasi-DEER is a scalable algorithm. ELK, which stands for "**E**valuating **L**evenberg-Marquardt with **K**alman, is a stable algorithm. We also contribute quasi-ELK, which is both scalable and stable.
 
 ![Figure 1](./ims/banner_with_citation.png)
