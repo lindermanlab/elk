@@ -1,5 +1,7 @@
 # Scalable and Stable Parallelization of Nonlinear RNNs
 
+**Check out an even simpler [quickstart-repo](https://github.com/lindermanlab/micro_deer/tree/main), including this [quickstart-notebook](https://github.com/lindermanlab/micro_deer/blob/main/nbs/demo.ipynb)**
+
 **Check out our [demo colab](https://colab.research.google.com/github/lindermanlab/elk/blob/main/blog.ipynb)**
 
 **Check out our [talk](https://www.youtube.com/watch?v=C9AqgW51-B4) at the [ASAP online seminar](https://asap-seminar.github.io/)!**
