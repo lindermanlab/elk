@@ -27,7 +27,6 @@ import optax
 import torch
 import pickle
 from torch.utils.data import DataLoader, TensorDataset
-import pytorch_lightning as pl
 from tqdm import tqdm
 from jax._src import prng
 
@@ -288,13 +287,12 @@ class SingleScaleGRU(eqx.Module):
 # --------------------------------
 
 
-class EigenWormsDataModule(pl.LightningDataModule):
+class EigenWormsDataModule():
     def __init__(
         self,
         batch_size: int = 32,
         datafile: str = "neuralrde",
     ):
-        super().__init__()
 
         self.batch_size = batch_size
         self.datafile = datafile
@@ -302,10 +300,6 @@ class EigenWormsDataModule(pl.LightningDataModule):
             self.train_file = "neuralrde_split/eigenworms_train.pkl"
             self.val_file = "neuralrde_split/eigenworms_val.pkl"
             self.test_file = "neuralrde_split/eigenworms_test.pkl"
-        elif datafile == "lem":
-            self.train_file = "lem_split/eigenworms_train.pkl"
-            self.val_file = "lem_split/eigenworms_val.pkl"
-            self.test_file = "lem_split/eigenworms_test.pkl"
         else:
             raise RuntimeError()
 
@@ -317,24 +311,18 @@ class EigenWormsDataModule(pl.LightningDataModule):
             if self.datafile == "neuralrde":
                 x, y = pickle.load(f)
                 self._train_dataset = TensorDataset(x, y)
-            elif self.datafile == "lem":
-                self._train_dataset = pickle.load(f)
             else:
                 raise RuntimeError()
         with open(self.val_file, "rb") as f:
             if self.datafile == "neuralrde":
                 x, y = pickle.load(f)
                 self._val_dataset = TensorDataset(x, y)
-            elif self.datafile == "lem":
-                self._val_dataset = pickle.load(f)
             else:
                 raise RuntimeError()
         with open(self.test_file, "rb") as f:
             if self.datafile == "neuralrde":
                 x, y = pickle.load(f)
                 self._test_dataset = TensorDataset(x, y)
-            elif self.datafile == "lem":
-                self._test_dataset = pickle.load(f)
             else:
                 raise RuntimeError()
         print("LEN TRAIN DATASET", len(self._train_dataset))
@@ -402,12 +390,10 @@ def compute_metrics(logits: jnp.ndarray, labels: jnp.ndarray) -> Dict[str, jnp.n
     return metrics
 
 
-def get_datamodule(
-    dset: str, batch_size: int, datafile: str = "neuralrde"
-) -> pl.LightningDataModule:
+def get_datamodule(dset: str, batch_size: int, datafile: str = "neuralrde"):
     dset = dset.lower()
     datafile = datafile.lower()
-    if datafile not in ["neuralrde", "lem"]:
+    if datafile not in ["neuralrde"]:
         raise NotImplementedError()
     if dset == "eigenworms":
         return EigenWormsDataModule(
