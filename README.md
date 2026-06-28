@@ -6,7 +6,14 @@
 
 **Check out our [talk](https://www.youtube.com/watch?v=C9AqgW51-B4) at the [ASAP online seminar](https://asap-seminar.github.io/)!**
 
-This repository contains code for the paper "Towards Scalable and Stable Parallelization of Nonlinear RNNs," published in NeurIPS 2024. The paper is available on ArXiv [here](https://arxiv.org/abs/2407.19115). The primary contributions of our paper are the quasi-DEER and ELK algorithms. quasi-DEER is a scalable algorithm. ELK, which stands for "**E**valuating **L**evenberg-Marquardt with **K**alman, is a stable algorithm. We also contribute quasi-ELK, which is both scalable and stable.
+## What is this repo? A way to parallelize "inherently sequential" processes like nonlinear recurrent neural networks!
+
+This repository contains code for the paper "Towards Scalable and Stable Parallelization of Nonlinear RNNs," published in NeurIPS 2024. The paper is available on ArXiv [here](https://arxiv.org/abs/2407.19115). 
+
+This line of work focuses on techniques to parallelize "inherently sequential" processes (like nonlinear RNNs) *over the sequence length.* This line of work is important because running an inherently sequential process over a long sequence length has very poor GPU utilization. The supposedly "inherently sequential" nature of nonlinear RNNs is one of the main reasons they were passed over in favor of transformers (embarassingly parallel) or linear RNNs (such as mamba or gated delta net, which can be parallelized over the seqeunce length). However, these "ungulate" (DEER and ELK) algorithms also allow nonlinear RNNs to be parallelized over the sequence length, improving their GPU utilization and unlocking their usage for longer sequence modeling.
+
+
+The primary contributions of our paper are the quasi-DEER and ELK algorithms for parallelizing RNNs over the sequence length. Quasi-DEER is a scalable algorithm. ELK, which stands for "**E**valuating **L**evenberg-Marquardt with **K**alman, is a stable algorithm. We also contribute quasi-ELK, which is both scalable and stable.
 
 ![Figure 1](./ims/banner_with_citation.png)
 
